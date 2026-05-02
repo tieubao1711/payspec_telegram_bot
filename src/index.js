@@ -3,14 +3,16 @@ const { createBot } = require('./bot');
 const { config } = require('./config');
 const { createOrderStore } = require('./storage/orderStore');
 const { createPayspecClient } = require('./services/payspec/client');
+const { connectMongo, disconnectMongo } = require('./db/mongoose');
 
 async function main() {
-  const orderStore = createOrderStore(config.dataDir);
-  await orderStore.init();
+  await connectMongo(config.mongodbUri);
+
+  const orderStore = createOrderStore();
 
   const payspecClient = createPayspecClient(config.payspec);
   const bot = createBot({ config, payspecClient, orderStore });
-  const app = createApp({ config, bot, orderStore });
+  const app = createApp({ config, bot, payspecClient, orderStore });
 
   app.listen(config.port, () => {
     console.log(`HTTP server listening on port ${config.port}`);
@@ -21,10 +23,12 @@ async function main() {
 
   process.once('SIGINT', () => {
     bot.stop('SIGINT');
+    disconnectMongo().finally(() => {});
     process.exit(0);
   });
   process.once('SIGTERM', () => {
     bot.stop('SIGTERM');
+    disconnectMongo().finally(() => {});
     process.exit(0);
   });
 }

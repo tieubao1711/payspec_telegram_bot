@@ -1,57 +1,37 @@
-const fs = require('fs/promises');
-const path = require('path');
+const { PaymentOrder } = require('../models/paymentOrder');
 
-function createOrderStore(dataDir) {
-  const filePath = path.resolve(dataDir, 'orders.json');
+function toPlain(doc) {
+  if (!doc) return null;
+  const plain = doc.toObject ? doc.toObject() : doc;
+  return {
+    ...plain,
+    id: String(plain._id),
+  };
+}
 
-  async function readAll() {
-    try {
-      const raw = await fs.readFile(filePath, 'utf8');
-      return JSON.parse(raw);
-    } catch (error) {
-      if (error.code === 'ENOENT') return [];
-      throw error;
-    }
-  }
-
-  async function writeAll(orders) {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, `${JSON.stringify(orders, null, 2)}\n`, 'utf8');
-  }
-
-  async function init() {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    try {
-      await fs.access(filePath);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      await writeAll([]);
-    }
-  }
-
+function createOrderStore() {
   async function upsert(order) {
-    const orders = await readAll();
-    const index = orders.findIndex((item) => item.transactionId === order.transactionId);
-
-    if (index >= 0) {
-      orders[index] = { ...orders[index], ...order };
-    } else {
-      orders.push(order);
-    }
-
-    await writeAll(orders);
-    return index >= 0 ? orders[index] : order;
+    const { _id, id, createdAt, updatedAt, __v, ...updates } = order;
+    const doc = await PaymentOrder.findOneAndUpdate(
+      { transactionId: updates.transactionId },
+      { $set: updates },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    return toPlain(doc);
   }
 
   async function findByTransactionId(transactionId) {
-    const orders = await readAll();
-    return orders.find((order) => order.transactionId === transactionId) || null;
+    return toPlain(await PaymentOrder.findOne({ transactionId }));
+  }
+
+  async function findByCallbackToken(callbackToken) {
+    return toPlain(await PaymentOrder.findOne({ callbackToken }));
   }
 
   return {
-    init,
     upsert,
     findByTransactionId,
+    findByCallbackToken,
   };
 }
 

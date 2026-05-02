@@ -1,6 +1,13 @@
 require('dotenv').config();
 
-const requiredEnv = ['TELEGRAM_BOT_TOKEN', 'PAYSPEC_API_KEY', 'PAYSPEC_SECRET_KEY', 'PAYSPEC_CALLBACK_URL'];
+const requiredEnv = [
+  'TELEGRAM_BOT_TOKEN',
+  'PAYSPEC_API_KEY',
+  'PAYSPEC_SECRET_KEY',
+  'PAYSPEC_CALLBACK_URL',
+  'APP_BASE_URL',
+  'MONGODB_URI',
+];
 
 function getMissingEnv() {
   return requiredEnv.filter((key) => !process.env[key]);
@@ -16,6 +23,7 @@ const config = {
   port: Number(process.env.PORT || 3000),
   dataDir: process.env.DATA_DIR || './data',
   appBaseUrl: process.env.APP_BASE_URL || '',
+  mongodbUri: process.env.MONGODB_URI,
   telegram: {
     token: process.env.TELEGRAM_BOT_TOKEN,
   },

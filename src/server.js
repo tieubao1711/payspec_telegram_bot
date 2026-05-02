@@ -1,7 +1,8 @@
 const express = require('express');
 const { registerNotifyRoutes } = require('./http/routes/notify');
+const { registerWithdrawRoutes } = require('./http/routes/withdraw');
 
-function createApp({ config, bot, orderStore }) {
+function createApp({ config, bot, payspecClient, orderStore }) {
   const app = express();
 
   app.use(express.urlencoded({ extended: false }));
@@ -12,6 +13,7 @@ function createApp({ config, bot, orderStore }) {
   });
 
   registerNotifyRoutes({ app, config, bot, orderStore });
+  registerWithdrawRoutes({ app, bot, payspecClient, orderStore });
 
   return app;
 }

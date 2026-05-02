@@ -96,6 +96,7 @@ function registerDepositCommand({ bot, payspecClient, orderStore }) {
 
       const order = {
         transactionId,
+        kind: 'deposit',
         telegramUserId: userId,
         chatId,
         amount: parsed.amount,
@@ -109,6 +110,8 @@ function registerDepositCommand({ bot, payspecClient, orderStore }) {
         qrBase64: payment.qr_base64,
         paymentUrl: payment.url_pay,
         providerMessage: payment.msg,
+        requestPayload: payment.requestPayload,
+        responsePayload: payment.responsePayload,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

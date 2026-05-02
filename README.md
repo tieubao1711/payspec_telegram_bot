@@ -41,6 +41,8 @@ Can cau hinh cac bien trong `.env`:
 - `PAYSPEC_API_KEY`: API key Payspec.
 - `PAYSPEC_SECRET_KEY`: secret key dung de ky MD5.
 - `PAYSPEC_CALLBACK_URL`: URL public tro ve endpoint `/notify`.
+- `APP_BASE_URL`: domain public dung de tao link form rut tien.
+- `MONGODB_URI`: connection string MongoDB.
 - `PAYSPEC_API_BASE_URL`: mac dinh `https://payspec.club`.
 - `PAYSPEC_PAYMENT_TYPE`: mac dinh `bank`.
 - `PAYSPEC_TYPE_BANK`: mac dinh `0`. Neu Payspec cap ma ngan hang rieng, thay bang ma do.
@@ -49,19 +51,32 @@ Can cau hinh cac bien trong `.env`:
 
 ```text
 /naptien 50000
+/ruttien 50000
 ```
 
 So tien hop le: 10,000 - 300,000,000 VND.
 
+Lenh `/ruttien amount` tao mot yeu cau nhap trong MongoDB va gui link form
+`/withdraw/:token` de nguoi dung nhap ngan hang, so tai khoan, ten chu tai
+khoan. Sau khi submit form, bot goi API Payspec `/chargingws/bank/v3`.
+
 ## Callback
 
 Payspec goi `POST /notify` hoac `POST /callback` voi content type
-`application/x-www-form-urlencoded`.
+`application/x-www-form-urlencoded` cho nap tien, hoac `multipart/form-data`
+cho rut tien.
 
 Bot xac thuc signature:
 
 ```text
 MD5(secret_key|status|comment|tran_id|type|request_amount|amount|real_amount|transaction_id)
+```
+
+Rut tien xac thuc callback bang MD5 hoac HMAC:
+
+```text
+MD5(apikey|status|amount|trans_id)
+HMAC-SHA256(apikey|status|amount|trans_id, secret_key)
 ```
 
 Neu hop le, server tra ve:
@@ -77,7 +92,8 @@ src/
   bot/                  Telegram commands
   config/               Environment configuration
   http/routes/          HTTP callback routes
+  models/               MongoDB models
   services/payspec/     Payspec API client, signature, transaction id
-  storage/              JSON order storage
+  storage/              MongoDB repository
   utils/                Shared helpers
 ```
