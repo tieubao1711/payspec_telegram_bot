@@ -10,6 +10,31 @@ cp .env.example .env
 npm start
 ```
 
+## Chay bang PM2
+
+App chi can mot process de chay ca Telegram bot va HTTP callback server.
+
+```bash
+npm install -g pm2
+npm run pm2:start
+npm run pm2:logs
+```
+
+Lenh quan ly:
+
+```bash
+npm run pm2:restart
+npm run pm2:stop
+pm2 status
+```
+
+Neu muon PM2 tu khoi dong lai sau khi server reboot:
+
+```bash
+pm2 startup
+pm2 save
+```
+
 Can cau hinh cac bien trong `.env`:
 
 - `TELEGRAM_BOT_TOKEN`: token bot Telegram.

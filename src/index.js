@@ -12,14 +12,21 @@ async function main() {
   const bot = createBot({ config, payspecClient, orderStore });
   const app = createApp({ config, bot, orderStore });
 
-  await bot.launch();
-
   app.listen(config.port, () => {
     console.log(`HTTP server listening on port ${config.port}`);
   });
 
-  process.once('SIGINT', () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+  await bot.launch();
+  console.log('Telegram bot polling started');
+
+  process.once('SIGINT', () => {
+    bot.stop('SIGINT');
+    process.exit(0);
+  });
+  process.once('SIGTERM', () => {
+    bot.stop('SIGTERM');
+    process.exit(0);
+  });
 }
 
 main().catch((error) => {
