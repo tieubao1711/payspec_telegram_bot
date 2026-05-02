@@ -65,8 +65,8 @@ Lenh `/ruttien amount` tao mot yeu cau nhap trong MongoDB va gui link form
 khoan. Bot gui ma xac thuc ve `WITHDRAWAL_APPROVER_CHAT_ID`; form phai nhap
 dung ma nay moi goi API Payspec `/chargingws/bank/v3`.
 
-Lenh `/thongke` chi cho `WITHDRAWAL_APPROVER_CHAT_ID` xem. Thong ke tinh theo
-don callback thanh cong trong gio Viet Nam:
+Lenh `/thongke` chi cho `WITHDRAWAL_APPROVER_CHAT_ID` xem. Thong ke chi tinh
+don nap tien callback thanh cong trong gio Viet Nam:
 
 - `/thongke`: hom nay
 - `/thongke week`: tuan nay, bat dau tu thu Hai

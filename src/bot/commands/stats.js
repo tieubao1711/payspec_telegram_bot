@@ -3,9 +3,9 @@ const { formatVnd } = require('../../utils/money');
 const { bold } = require('../../utils/telegram');
 
 const PERIOD_LABELS = {
-  today: 'HOM NAY',
-  week: 'TUAN NAY',
-  month: 'THANG NAY',
+  today: 'hom nay',
+  week: 'tuan nay',
+  month: 'thang nay',
 };
 
 function parseStatsPeriod(text) {
@@ -22,17 +22,21 @@ function parseStatsPeriod(text) {
 }
 
 function buildStatsMessage(period, stats) {
-  return [
-    bold(`THONG KE ${PERIOD_LABELS[period]}`),
+  const lines = [
+    bold(`Thong ke doanh thu ${PERIOD_LABELS[period]}`),
     '',
-    `Tien nap thanh cong: ${bold(formatVnd(stats.depositTotal))}`,
-    `So don nap: ${stats.depositCount}`,
-    '',
-    `Tien rut thanh cong: ${bold(formatVnd(stats.withdrawalTotal))}`,
-    `So don rut: ${stats.withdrawalCount}`,
-    '',
-    `Net: ${bold(formatVnd(stats.netTotal))}`,
-  ].join('\n');
+    `Doanh thu: ${bold(formatVnd(stats.revenue))}`,
+    `Lenh nap thanh cong: ${stats.count}`,
+  ];
+
+  if (period !== 'today' && stats.days.length > 0) {
+    lines.push('', bold('Theo ngay'));
+    for (const day of stats.days) {
+      lines.push(`${day.date}: ${formatVnd(day.revenue)} (${day.count} lenh)`);
+    }
+  }
+
+  return lines.join('\n');
 }
 
 function registerStatsCommand({ bot, config, orderStore }) {
@@ -49,7 +53,7 @@ function registerStatsCommand({ bot, config, orderStore }) {
     }
 
     const range = getStatsRange(parsed.period);
-    const stats = await orderStore.getRevenueStats(range);
+    const stats = await orderStore.getDepositRevenueStats(range);
 
     await ctx.reply(buildStatsMessage(parsed.period, stats), {
       parse_mode: 'HTML',

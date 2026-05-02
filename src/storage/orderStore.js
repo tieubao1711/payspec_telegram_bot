@@ -28,69 +28,75 @@ function createOrderStore() {
     return toPlain(await PaymentOrder.findOne({ callbackToken }));
   }
 
-  async function getRevenueStats({ from, to }) {
+  async function getDepositRevenueStats({ from, to }) {
     const rows = await PaymentOrder.aggregate([
       {
         $match: {
+          kind: 'deposit',
           status: '1',
           lastNotifyAt: { $gte: from, $lt: to },
-          kind: { $in: ['deposit', 'withdrawal'] },
         },
       },
       {
         $addFields: {
-          depositAmount: {
-            $cond: [
-              { $eq: ['$kind', 'deposit'] },
-              {
-                $convert: {
-                  input: { $ifNull: ['$realAmount', { $ifNull: ['$confirmedAmount', '$amount'] }] },
-                  to: 'double',
-                  onError: 0,
-                  onNull: 0,
-                },
-              },
-              0,
-            ],
+          revenueAmount: {
+            $convert: {
+              input: { $ifNull: ['$realAmount', { $ifNull: ['$confirmedAmount', '$amount'] }] },
+              to: 'double',
+              onError: 0,
+              onNull: 0,
+            },
           },
-          withdrawalAmount: {
-            $cond: [{ $eq: ['$kind', 'withdrawal'] }, '$amount', 0],
+          day: {
+            $dateToString: {
+              date: '$lastNotifyAt',
+              format: '%d/%m/%Y',
+              timezone: 'Asia/Ho_Chi_Minh',
+            },
           },
         },
       },
       {
         $group: {
+          _id: '$day',
+          revenue: { $sum: '$revenueAmount' },
+          count: { $sum: 1 },
+          firstAt: { $min: '$lastNotifyAt' },
+        },
+      },
+      {
+        $sort: { firstAt: 1 },
+      },
+      {
+        $group: {
           _id: null,
-          depositTotal: { $sum: '$depositAmount' },
-          withdrawalTotal: { $sum: '$withdrawalAmount' },
-          depositCount: {
-            $sum: { $cond: [{ $eq: ['$kind', 'deposit'] }, 1, 0] },
-          },
-          withdrawalCount: {
-            $sum: { $cond: [{ $eq: ['$kind', 'withdrawal'] }, 1, 0] },
+          revenue: { $sum: '$revenue' },
+          count: { $sum: '$count' },
+          days: {
+            $push: {
+              date: '$_id',
+              revenue: '$revenue',
+              count: '$count',
+            },
           },
         },
       },
     ]);
 
     const stats = rows[0] || {
-      depositTotal: 0,
-      withdrawalTotal: 0,
-      depositCount: 0,
-      withdrawalCount: 0,
+      revenue: 0,
+      count: 0,
+      days: [],
     };
 
-    return {
-      ...stats,
-      netTotal: stats.depositTotal - stats.withdrawalTotal,
-    };
+    return stats;
   }
 
   return {
     upsert,
     findByTransactionId,
     findByCallbackToken,
-    getRevenueStats,
+    getDepositRevenueStats,
   };
 }
 
