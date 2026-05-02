@@ -13,7 +13,7 @@ function createApp({ config, bot, payspecClient, orderStore }) {
   });
 
   registerNotifyRoutes({ app, config, bot, orderStore });
-  registerWithdrawRoutes({ app, bot, payspecClient, orderStore });
+  registerWithdrawRoutes({ app, config, bot, payspecClient, orderStore });
 
   return app;
 }

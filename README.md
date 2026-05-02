@@ -43,6 +43,7 @@ Can cau hinh cac bien trong `.env`:
 - `PAYSPEC_CALLBACK_URL`: URL public tro ve endpoint `/notify`.
 - `APP_BASE_URL`: domain public dung de tao link form rut tien.
 - `MONGODB_URI`: connection string MongoDB.
+- `WITHDRAWAL_APPROVER_CHAT_ID`: chat ID Telegram nhan ma xac thuc rut tien. Dung lenh `/myid` de lay ID.
 - `PAYSPEC_API_BASE_URL`: mac dinh `https://payspec.club`.
 - `PAYSPEC_PAYMENT_TYPE`: mac dinh `bank`.
 - `PAYSPEC_TYPE_BANK`: mac dinh `0`. Neu Payspec cap ma ngan hang rieng, thay bang ma do.
@@ -52,13 +53,24 @@ Can cau hinh cac bien trong `.env`:
 ```text
 /naptien 50000
 /ruttien 50000
+/thongke
+/thongke week
+/thongke month
 ```
 
 So tien hop le: 10,000 - 300,000,000 VND.
 
 Lenh `/ruttien amount` tao mot yeu cau nhap trong MongoDB va gui link form
 `/withdraw/:token` de nguoi dung nhap ngan hang, so tai khoan, ten chu tai
-khoan. Sau khi submit form, bot goi API Payspec `/chargingws/bank/v3`.
+khoan. Bot gui ma xac thuc ve `WITHDRAWAL_APPROVER_CHAT_ID`; form phai nhap
+dung ma nay moi goi API Payspec `/chargingws/bank/v3`.
+
+Lenh `/thongke` chi cho `WITHDRAWAL_APPROVER_CHAT_ID` xem. Thong ke tinh theo
+don callback thanh cong trong gio Viet Nam:
+
+- `/thongke`: hom nay
+- `/thongke week`: tuan nay, bat dau tu thu Hai
+- `/thongke month`: thang nay
 
 ## Callback
 

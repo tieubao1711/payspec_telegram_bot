@@ -2,8 +2,12 @@ const {
   createCallbackToken,
   createWithdrawalTransactionId,
 } = require('../../services/payspec/transactionId');
+const {
+  createVerificationCode,
+  hashVerificationCode,
+} = require('../../services/security/verification');
 const { formatVnd } = require('../../utils/money');
-const { bold, code } = require('../../utils/telegram');
+const { bold, code, escapeHtml } = require('../../utils/telegram');
 
 const MIN_WITHDRAWAL = 10000;
 const MAX_WITHDRAWAL = 300000000;
@@ -40,10 +44,26 @@ function buildWithdrawalDraftMessage(order, formUrl) {
     bold('YEU CAU RUT TIEN'),
     '',
     `So tien: ${bold(formatVnd(order.amount))}`,
-    `Ma yeu cau: ${code(order.transactionId)}`,
     '',
-    'Mo link ben duoi de nhap ngan hang, so tai khoan va ten chu tai khoan.',
+    'Mo link ben duoi de nhap thong tin rut tien.',
+    'Ma xac thuc da duoc gui cho quan tri vien.',
     formUrl,
+  ].join('\n');
+}
+
+function buildApproverMessage({ ctx, order, verificationCode }) {
+  const username = ctx.from.username ? `@${ctx.from.username}` : 'khong co username';
+
+  return [
+    bold('MA XAC THUC RUT TIEN'),
+    '',
+    `Ma xac thuc: ${code(verificationCode)}`,
+    `So tien: ${bold(formatVnd(order.amount))}`,
+    `Nguoi tao: ${escapeHtml(ctx.from.first_name || '')} ${escapeHtml(ctx.from.last_name || '')}`.trim(),
+    `Telegram ID: ${code(ctx.from.id)}`,
+    `Username: ${escapeHtml(username)}`,
+    '',
+    'Chi cung cap ma nay neu ban dong y cho yeu cau rut tien.',
   ].join('\n');
 }
 
@@ -57,8 +77,15 @@ function registerWithdrawCommand({ bot, config, orderStore }) {
       return;
     }
 
+    if (!config.withdrawalApproverChatId) {
+      await ctx.reply('Chua cau hinh WITHDRAWAL_APPROVER_CHAT_ID nen khong the tao lenh rut tien.');
+      return;
+    }
+
     const transactionId = createWithdrawalTransactionId(ctx.from.id);
     const callbackToken = createCallbackToken();
+    const verificationCode = createVerificationCode();
+    const verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const order = await orderStore.upsert({
       transactionId,
       kind: 'withdrawal',
@@ -67,8 +94,21 @@ function registerWithdrawCommand({ bot, config, orderStore }) {
       chatId: ctx.chat.id,
       amount: parsed.amount,
       callbackToken,
+      verificationCodeHash: hashVerificationCode({
+        secret: config.payspec.secretKey,
+        transactionId,
+        code: verificationCode,
+      }),
+      verificationCodeExpiresAt,
+      verificationAttempts: 0,
     });
     const formUrl = `${config.appBaseUrl.replace(/\/$/, '')}/withdraw/${order.callbackToken}`;
+
+    await bot.telegram.sendMessage(
+      config.withdrawalApproverChatId,
+      buildApproverMessage({ ctx, order, verificationCode }),
+      { parse_mode: 'HTML' }
+    );
 
     await ctx.reply(buildWithdrawalDraftMessage(order, formUrl), {
       parse_mode: 'HTML',

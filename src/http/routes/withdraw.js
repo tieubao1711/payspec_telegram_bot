@@ -1,4 +1,5 @@
 const { formatVnd } = require('../../utils/money');
+const { verifyCode } = require('../../services/security/verification');
 
 const BANK_OPTIONS = [
   'ACB',
@@ -117,9 +118,12 @@ function renderWithdrawalForm(order, error = '') {
         <label for="accountName">Ten chu tai khoan</label>
         <input id="accountName" name="accountName" value="${escapeHtml(order.accountName)}" autocomplete="name" required>
 
+        <label for="verificationCode">Ma xac thuc</label>
+        <input id="verificationCode" name="verificationCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+
         <button type="submit">Tao lenh rut tien</button>
       </form>
-      <p class="muted">Ma yeu cau: ${escapeHtml(order.transactionId)}</p>
+      <p class="muted">Ma xac thuc duoc gui rieng cho quan tri vien va co hieu luc trong 10 phut.</p>
     `,
   });
 }
@@ -143,6 +147,7 @@ function validateWithdrawalForm(body) {
   const bank = String(body.bank || '').trim().toUpperCase();
   const accountNumber = String(body.accountNumber || '').trim();
   const accountName = String(body.accountName || '').trim().replace(/\s+/g, ' ').toUpperCase();
+  const verificationCode = String(body.verificationCode || '').trim();
 
   if (!bank) return { error: 'Vui long chon ngan hang.' };
   if (!/^[A-Z0-9 _-]{2,40}$/.test(bank)) return { error: 'Ma ngan hang khong hop le.' };
@@ -150,11 +155,19 @@ function validateWithdrawalForm(body) {
   if (accountName.length < 3 || accountName.length > 80) {
     return { error: 'Ten chu tai khoan khong hop le.' };
   }
+  if (!/^\d{6}$/.test(verificationCode)) {
+    return { error: 'Ma xac thuc phai gom 6 chu so.' };
+  }
 
-  return { bank, accountNumber, accountName };
+  return { bank, accountNumber, accountName, verificationCode };
 }
 
-function registerWithdrawRoutes({ app, bot, payspecClient, orderStore }) {
+function isVerificationExpired(order) {
+  if (!order.verificationCodeExpiresAt) return true;
+  return new Date(order.verificationCodeExpiresAt).getTime() < Date.now();
+}
+
+function registerWithdrawRoutes({ app, config, bot, payspecClient, orderStore }) {
   app.get('/withdraw/:token', async (req, res) => {
     const order = await orderStore.findByCallbackToken(req.params.token);
 
@@ -190,6 +203,39 @@ function registerWithdrawRoutes({ app, bot, payspecClient, orderStore }) {
       return;
     }
 
+    if (!order.verificationCodeHash || isVerificationExpired(order)) {
+      res.status(403).send(renderWithdrawalForm({ ...order, ...parsed }, 'Ma xac thuc da het han. Vui long tao lai lenh rut tien.'));
+      return;
+    }
+
+    if ((order.verificationAttempts || 0) >= 5) {
+      await orderStore.upsert({
+        ...order,
+        status: 'verification_locked',
+      });
+      res.status(403).send(renderWithdrawalForm({ ...order, ...parsed }, 'Yeu cau da bi khoa do nhap sai ma qua nhieu lan.'));
+      return;
+    }
+
+    const isVerified = verifyCode({
+      secret: config.payspec.secretKey,
+      transactionId: order.transactionId,
+      code: parsed.verificationCode,
+      expectedHash: order.verificationCodeHash,
+    });
+
+    if (!isVerified) {
+      await orderStore.upsert({
+        ...order,
+        bank: parsed.bank,
+        accountNumber: parsed.accountNumber,
+        accountName: parsed.accountName,
+        verificationAttempts: (order.verificationAttempts || 0) + 1,
+      });
+      res.status(403).send(renderWithdrawalForm({ ...order, ...parsed }, 'Ma xac thuc khong dung.'));
+      return;
+    }
+
     try {
       const payout = await payspecClient.createWithdrawalOrder({
         amount: order.amount,
@@ -207,6 +253,8 @@ function registerWithdrawRoutes({ app, bot, payspecClient, orderStore }) {
         providerMessage: responsePayload.msg,
         requestPayload: payout.requestPayload,
         responsePayload,
+        verifiedAt: new Date(),
+        verificationCodeHash: undefined,
       });
 
       if (order.chatId) {

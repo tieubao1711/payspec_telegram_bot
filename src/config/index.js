@@ -24,6 +24,9 @@ const config = {
   dataDir: process.env.DATA_DIR || './data',
   appBaseUrl: process.env.APP_BASE_URL || '',
   mongodbUri: process.env.MONGODB_URI,
+  withdrawalApproverChatId: process.env.WITHDRAWAL_APPROVER_CHAT_ID
+    ? Number(process.env.WITHDRAWAL_APPROVER_CHAT_ID)
+    : null,
   telegram: {
     token: process.env.TELEGRAM_BOT_TOKEN,
   },
