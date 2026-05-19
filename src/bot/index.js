@@ -6,6 +6,17 @@ const { registerStatsCommand } = require('./commands/stats');
 function createBot({ config, payspecClient, orderStore }) {
   const bot = new Telegraf(config.telegram.token);
 
+  bot.telegram
+    .setMyCommands([
+      { command: 'naptien', description: 'Tao lenh nap tien' },
+      { command: 'ruttien', description: 'Tao lenh rut tien' },
+      { command: 'thongke', description: 'Xem doanh thu nap tien' },
+      { command: 'myid', description: 'Xem Telegram ID' },
+    ])
+    .catch((error) => {
+      console.error('Failed to set Telegram commands:', error.message);
+    });
+
   bot.start((ctx) => {
     ctx.reply(
       'Chao mung ban. Dung lenh /naptien amount de tao don nap tien. Vi du: /naptien 50000'
@@ -13,7 +24,7 @@ function createBot({ config, payspecClient, orderStore }) {
   });
 
   bot.command('myid', (ctx) => {
-    ctx.reply(`Chat ID cua ban: ${ctx.chat.id}`);
+    ctx.reply([`User ID cua ban: ${ctx.from.id}`, `Chat ID hien tai: ${ctx.chat.id}`].join('\n'));
   });
 
   registerDepositCommand({ bot, payspecClient, orderStore });

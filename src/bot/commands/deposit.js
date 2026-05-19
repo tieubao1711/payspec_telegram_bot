@@ -34,22 +34,22 @@ function parseDepositAmount(text) {
 
 function buildPaymentMessage(order) {
   const lines = [
-    `${bold('THÔNG TIN XÁC MINH')}`,
+    `${bold('THONG TIN NAP TIEN')}`,
     '',
     `So tien: ${bold(formatVnd(order.amount))}`,
   ];
 
-  if (order.typeBank) lines.push(`Ngân hàng: ${bold(String(order.typeBank).toUpperCase())}`);
-  if (order.accountNumber) lines.push(`Số tài khoản: ${code(order.accountNumber)}`);
-  if (order.accountName) lines.push(`Chủ tài khoản: ${bold(order.accountName)}`);
+  if (order.typeBank) lines.push(`Ngan hang: ${bold(String(order.typeBank).toUpperCase())}`);
+  if (order.accountNumber) lines.push(`So tai khoan: ${code(order.accountNumber)}`);
+  if (order.accountName) lines.push(`Chu tai khoan: ${bold(order.accountName)}`);
 
   if (order.comment) {
-    lines.push(`${bold('Nội dung chuyển khoản')}`, code(order.comment));
+    lines.push(`${bold('Noi dung chuyen khoan')}`, code(order.comment));
   }
 
   lines.push(
     '',
-    'Vui lòng chuyển đúng số tiền và nội dung trên.'
+    'Vui long chuyen dung so tien va noi dung tren.'
   );
   return lines.join('\n');
 }

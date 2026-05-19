@@ -41,7 +41,7 @@ function buildStatsMessage(period, stats) {
 
 function registerStatsCommand({ bot, config, orderStore }) {
   bot.command('thongke', async (ctx) => {
-    if (config.withdrawalApproverChatId && ctx.chat.id !== config.withdrawalApproverChatId) {
+    if (config.withdrawalApproverChatId && ctx.from.id !== config.withdrawalApproverChatId) {
       await ctx.reply('Ban khong co quyen xem thong ke.');
       return;
     }
