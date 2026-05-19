@@ -8,46 +8,45 @@ const { bold, code } = require('../../utils/telegram');
 const upload = multer();
 
 const STATUS_MESSAGES = {
-  0: 'Don nap tien dang cho xu ly',
-  1: 'Nap tien thanh cong',
-  2: 'Nap tien that bai',
-  3: 'Nap tien thanh cong nhung so tien bi loi',
+  0: 'Đơn nạp tiền đang chờ xử lý',
+  1: 'Nạp tiền thành công',
+  2: 'Nạp tiền thất bại',
+  3: 'Nạp tiền thành công nhưng số tiền bị lỗi',
 };
 
 const WITHDRAWAL_STATUS_MESSAGES = {
-  0: 'Lenh rut tien dang cho xu ly',
-  1: 'Rut tien thanh cong',
-  2: 'Rut tien that bai',
+  0: 'Lệnh rút tiền đang chờ xử lý',
+  1: 'Rút tiền thành công',
+  2: 'Rút tiền thất bại',
 };
 
 function buildNotifyMessage(order, payload) {
-  const statusText = STATUS_MESSAGES[payload.status] || `Trang thai: ${payload.status}`;
+  const statusText = STATUS_MESSAGES[payload.status] || `Trạng thái: ${payload.status}`;
   const lines = [
-    `${bold(statusText)}`,
+    bold(statusText),
     '',
-    `${bold('Ket qua giao dich')}`,
-    `Ma don: ${code(payload.transaction_id)}`,
-    `Ma GD Payspec: ${code(payload.tran_id)}`,
-    `So tien yeu cau: ${bold(formatVnd(payload.request_amount))}`,
-    `So tien xac nhan: ${bold(formatVnd(payload.amount))}`,
-    `Thuc nhan: ${bold(formatVnd(payload.real_amount))}`,
+    bold('Kết quả giao dịch'),
+    `Số tiền chuyển: ${bold(formatVnd(payload.amount))}`,
+    `Số tiền ghi nhận: ${bold(formatVnd(payload.real_amount))}`,
   ];
 
-  if (payload.comment) lines.push(`Noi dung CK: ${code(payload.comment)}`);
-  if (order && order.providerMessage) lines.push(`Ghi chu: ${code(order.providerMessage)}`);
+  if (payload.request_amount && payload.request_amount !== payload.amount) {
+    lines.push(`Số tiền yêu cầu: ${bold(formatVnd(payload.request_amount))}`);
+  }
+  if (payload.comment) lines.push(`Nội dung CK: ${code(payload.comment)}`);
 
   return lines.join('\n');
 }
 
 function buildWithdrawalNotifyMessage(payload) {
-  const statusText = WITHDRAWAL_STATUS_MESSAGES[payload.status] || `Trang thai: ${payload.status}`;
+  const statusText = WITHDRAWAL_STATUS_MESSAGES[payload.status] || `Trạng thái: ${payload.status}`;
   return [
     bold(statusText),
     '',
-    bold('Ket qua rut tien'),
-    `Ma yeu cau: ${code(payload.trans_id)}`,
-    `So tien: ${bold(formatVnd(payload.amount))}`,
-    payload.msg ? `Ghi chu: ${code(payload.msg)}` : '',
+    bold('Kết quả rút tiền'),
+    `Mã yêu cầu: ${code(payload.trans_id)}`,
+    `Số tiền: ${bold(formatVnd(payload.amount))}`,
+    payload.msg ? `Ghi chú: ${code(payload.msg)}` : '',
   ]
     .filter(Boolean)
     .join('\n');

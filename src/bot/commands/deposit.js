@@ -1,6 +1,6 @@
 const { createPartnerTransactionId } = require('../../services/payspec/transactionId');
 const { formatVnd } = require('../../utils/money');
-const { bold, code, escapeHtml } = require('../../utils/telegram');
+const { bold, code } = require('../../utils/telegram');
 
 const MIN_DEPOSIT = 10000;
 const MAX_DEPOSIT = 300000000;
@@ -10,22 +10,22 @@ function parseDepositAmount(text) {
   const rawAmount = parts[1];
 
   if (!rawAmount) {
-    return { error: 'Vui long nhap so tien. Vi du: /naptien 50000' };
+    return { error: 'Vui lòng nhập số tiền. Ví dụ: /naptien 50000' };
   }
 
   if (parts.length > 2) {
-    return { error: 'Lenh khong hop le. Vi du dung: /naptien 50000' };
+    return { error: 'Lệnh không hợp lệ. Ví dụ đúng: /naptien 50000' };
   }
 
   const normalized = rawAmount.replace(/[,.]/g, '');
   if (!/^\d+$/.test(normalized)) {
-    return { error: 'So tien khong hop le. Vi du dung: /naptien 50000' };
+    return { error: 'Số tiền không hợp lệ. Ví dụ đúng: /naptien 50000' };
   }
 
   const amount = Number(normalized);
   if (!Number.isSafeInteger(amount) || amount < MIN_DEPOSIT || amount > MAX_DEPOSIT) {
     return {
-      error: `So tien nap phai tu ${formatVnd(MIN_DEPOSIT)} den ${formatVnd(MAX_DEPOSIT)}.`,
+      error: `Số tiền nạp phải từ ${formatVnd(MIN_DEPOSIT)} đến ${formatVnd(MAX_DEPOSIT)}.`,
     };
   }
 
@@ -34,22 +34,23 @@ function parseDepositAmount(text) {
 
 function buildPaymentMessage(order) {
   const lines = [
-    `${bold('THONG TIN NAP TIEN')}`,
+    bold('Thông tin nạp tiền'),
     '',
-    `So tien: ${bold(formatVnd(order.amount))}`,
+    `Số tiền: ${bold(formatVnd(order.amount))}`,
   ];
 
-  if (order.typeBank) lines.push(`Ngan hang: ${bold(String(order.typeBank).toUpperCase())}`);
-  if (order.accountNumber) lines.push(`So tai khoan: ${code(order.accountNumber)}`);
-  if (order.accountName) lines.push(`Chu tai khoan: ${bold(order.accountName)}`);
+  if (order.typeBank) lines.push(`Ngân hàng: ${bold(String(order.typeBank).toUpperCase())}`);
+  if (order.accountNumber) lines.push(`Số tài khoản: ${code(order.accountNumber)}`);
+  if (order.accountName) lines.push(`Chủ tài khoản: ${bold(order.accountName)}`);
 
   if (order.comment) {
-    lines.push(`${bold('Noi dung chuyen khoan')}`, code(order.comment));
+    lines.push('', bold('Nội dung chuyển khoản'), code(order.comment));
   }
 
   lines.push(
     '',
-    'Vui long chuyen dung so tien va noi dung tren.'
+    bold('Lưu ý'),
+    'Vui lòng chuyển đúng số tiền và đúng nội dung để hệ thống xác nhận tự động.'
   );
   return lines.join('\n');
 }
@@ -121,7 +122,7 @@ function registerDepositCommand({ bot, payspecClient, orderStore }) {
       await sendPaymentInstructions(ctx, order);
     } catch (error) {
       console.error('Create deposit order failed:', error);
-      await ctx.reply(`Khong tao duoc don nap tien: ${error.message}`);
+      await ctx.reply(`Không tạo được đơn nạp tiền: ${error.message}`);
     }
   });
 }
