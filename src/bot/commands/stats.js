@@ -39,6 +39,19 @@ function buildStatsMessage(period, stats) {
   return lines.join('\n');
 }
 
+function applyCheckpoint(range, checkpoint) {
+  if (!checkpoint) return range;
+
+  const checkpointDate = new Date(checkpoint.closedAt);
+  if (checkpointDate <= range.from) return range;
+  if (checkpointDate >= range.to) return { ...range, from: range.to };
+
+  return {
+    ...range,
+    from: checkpointDate,
+  };
+}
+
 function registerStatsCommand({ bot, config, orderStore }) {
   bot.command('thongke', async (ctx) => {
     if (config.withdrawalApproverChatId && ctx.from.id !== config.withdrawalApproverChatId) {
@@ -52,7 +65,9 @@ function registerStatsCommand({ bot, config, orderStore }) {
       return;
     }
 
-    const range = getStatsRange(parsed.period);
+    const baseRange = getStatsRange(parsed.period);
+    const checkpoint = await orderStore.getLastRevenueCheckpoint();
+    const range = applyCheckpoint(baseRange, checkpoint);
     const stats = await orderStore.getDepositRevenueStats(range);
 
     await ctx.reply(buildStatsMessage(parsed.period, stats), {

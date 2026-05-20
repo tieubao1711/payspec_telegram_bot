@@ -2,6 +2,7 @@ const { Telegraf } = require('telegraf');
 const { registerDepositCommand } = require('./commands/deposit');
 const { registerWithdrawCommand } = require('./commands/withdraw');
 const { registerStatsCommand } = require('./commands/stats');
+const { registerCloseRevenueCommand } = require('./commands/closeRevenue');
 
 function createBot({ config, payspecClient, orderStore }) {
   const bot = new Telegraf(config.telegram.token);
@@ -11,6 +12,7 @@ function createBot({ config, payspecClient, orderStore }) {
       { command: 'naptien', description: 'Tao lenh nap tien' },
       { command: 'ruttien', description: 'Tao lenh rut tien' },
       { command: 'thongke', description: 'Xem doanh thu nap tien' },
+      { command: 'chotdoanhthu', description: 'Chot va reset doanh thu' },
       { command: 'myid', description: 'Xem Telegram ID' },
     ])
     .catch((error) => {
@@ -30,6 +32,7 @@ function createBot({ config, payspecClient, orderStore }) {
   registerDepositCommand({ bot, payspecClient, orderStore });
   registerWithdrawCommand({ bot, config, orderStore });
   registerStatsCommand({ bot, config, orderStore });
+  registerCloseRevenueCommand({ bot, config, orderStore });
 
   bot.catch((error, ctx) => {
     console.error(`Telegram bot error for update ${ctx.update.update_id}:`, error);

@@ -1,4 +1,5 @@
 const { PaymentOrder } = require('../models/paymentOrder');
+const { RevenueCheckpoint } = require('../models/revenueCheckpoint');
 
 function toPlain(doc) {
   if (!doc) return null;
@@ -92,11 +93,31 @@ function createOrderStore() {
     return stats;
   }
 
+  async function getLastRevenueCheckpoint() {
+    return toPlain(await RevenueCheckpoint.findOne().sort({ closedAt: -1 }));
+  }
+
+  async function createRevenueCheckpoint({ closedAt, closedBy, chatId, from, to, revenue, count }) {
+    const doc = await RevenueCheckpoint.create({
+      closedAt,
+      closedBy,
+      chatId,
+      from,
+      to,
+      revenue,
+      count,
+    });
+
+    return toPlain(doc);
+  }
+
   return {
     upsert,
     findByTransactionId,
     findByCallbackToken,
     getDepositRevenueStats,
+    getLastRevenueCheckpoint,
+    createRevenueCheckpoint,
   };
 }
 

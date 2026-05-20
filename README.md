@@ -56,6 +56,7 @@ Can cau hinh cac bien trong `.env`:
 /thongke
 /thongke week
 /thongke month
+/chotdoanhthu
 ```
 
 So tien hop le: 10,000 - 300,000,000 VND.
@@ -71,6 +72,11 @@ don nap tien callback thanh cong trong gio Viet Nam:
 - `/thongke`: hom nay
 - `/thongke week`: tuan nay, bat dau tu thu Hai
 - `/thongke month`: thang nay
+
+Lenh `/chotdoanhthu` luu moc chot vao MongoDB collection
+`revenue_checkpoints`. Du lieu don trong `payment_orders` van giu nguyen,
+nhung cac lenh `/thongke` sau do chi tinh doanh thu nap tien phat sinh sau moc
+chot gan nhat.
 
 ## Callback
 
