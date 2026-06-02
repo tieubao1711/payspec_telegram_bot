@@ -1,8 +1,11 @@
-require('dotenv').config();
-
+const path = require('path');
 const mongoose = require('mongoose');
 const { PaymentOrder } = require('../src/models/paymentOrder');
 const { formatVnd } = require('../src/utils/money');
+
+require('dotenv').config({
+  path: path.resolve(__dirname, '..', '.env'),
+});
 
 async function getRevenueReport() {
   const rows = await PaymentOrder.aggregate([
