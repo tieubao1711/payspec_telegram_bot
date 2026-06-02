@@ -24,6 +24,8 @@ const config = {
   dataDir: process.env.DATA_DIR || './data',
   appBaseUrl: process.env.APP_BASE_URL || '',
   mongodbUri: process.env.MONGODB_URI,
+  mongodbConnectRetries: Number(process.env.MONGODB_CONNECT_RETRIES || 30),
+  mongodbConnectRetryMs: Number(process.env.MONGODB_CONNECT_RETRY_MS || 5000),
   withdrawalApproverChatId: process.env.WITHDRAWAL_APPROVER_CHAT_ID
     ? Number(process.env.WITHDRAWAL_APPROVER_CHAT_ID)
     : null,

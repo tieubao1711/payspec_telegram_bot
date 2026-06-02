@@ -78,6 +78,15 @@ Lenh `/chotdoanhthu` luu moc chot vao MongoDB collection
 nhung cac lenh `/thongke` sau do chi tinh doanh thu nap tien phat sinh sau moc
 chot gan nhat.
 
+## Bao cao doanh thu toan bo
+
+Script nay doc truc tiep MongoDB va khong bi anh huong boi moc
+`/chotdoanhthu`:
+
+```bash
+npm run report:revenue
+```
+
 ## Callback
 
 Payspec goi `POST /notify` hoac `POST /callback` voi content type

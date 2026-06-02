@@ -6,7 +6,10 @@ const { createPayspecClient } = require('./services/payspec/client');
 const { connectMongo, disconnectMongo } = require('./db/mongoose');
 
 async function main() {
-  await connectMongo(config.mongodbUri);
+  await connectMongo(config.mongodbUri, {
+    retries: config.mongodbConnectRetries,
+    retryMs: config.mongodbConnectRetryMs,
+  });
 
   const orderStore = createOrderStore();
 
